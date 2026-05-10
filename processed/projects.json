@@ -1,0 +1,30 @@
+[
+  {
+    "id": "019d9131-3207-7150-928b-caa023db0f52",
+    "name": "How to use Claude",
+    "description": "An example project that also doubles as a how-to guide for using Claude. Chat with it to learn more about how to get the most out of chatting with Claude!",
+    "created_at": "2026-04-15T12:50:13.613776+00:00",
+    "updated_at": "2026-04-15T12:50:13.613776+00:00"
+  },
+  {
+    "id": "019d9132-f54c-72fa-82b1-e7ef17acbd43",
+    "name": "Interactive Data Visualization For Cultural Benchmarking",
+    "description": "",
+    "created_at": "2026-04-15T12:52:09.166046+00:00",
+    "updated_at": "2026-04-15T12:52:09.166046+00:00"
+  },
+  {
+    "id": "019d92f7-decc-70f9-acdf-1fe006942cf1",
+    "name": "Fair Seat Allotment",
+    "description": "Everyone gets a good view of the stage.",
+    "created_at": "2026-04-15T21:06:51.215344+00:00",
+    "updated_at": "2026-04-15T21:06:51.215344+00:00"
+  },
+  {
+    "id": "019da158-f7b1-75c7-887f-deff90de11c3",
+    "name": "Cultural Benchmarking Project Analysis Part",
+    "description": "This project works on trying to identify how accurately do LLM represent cultures(in terms of countries) and when they make errors in cultural representations, are there any patterns. ",
+    "created_at": "2026-04-18T16:07:35.603863+00:00",
+    "updated_at": "2026-04-18T16:07:35.603863+00:00"
+  }
+]
