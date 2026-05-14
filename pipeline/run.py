@@ -16,8 +16,6 @@ from .normalize import normalize_conversations, normalize_projects
 from .extract import (
     enrich_all,
     build_topic_layer,
-    build_method_layer,
-    build_message_layer,
     build_summary,
 )
 
@@ -50,15 +48,11 @@ def run(data_dir: str = "test_data", out_dir: str = "processed") -> None:
     write_json(out_path / "conversations.json",
                [c.to_dict(include_messages=False) for c in conversations])
 
-    # Messages flat list (fine-grained timeline)
-    write_json(out_path / "messages.json", build_message_layer(conversations))
-
     # Projects
     write_json(out_path / "projects.json", [p.to_dict() for p in projects])
 
-    # Viz-layer scaffolds (embedding/LLM fields left as null for next steps)
+    # Viz-layer scaffold — null fields filled by pipeline.beliefs + pipeline.embed
     write_json(out_path / "layer_topic.json", build_topic_layer(conversations))
-    write_json(out_path / "layer_method.json", build_method_layer(conversations))
 
     # Summary stats
     summary = build_summary(conversations)

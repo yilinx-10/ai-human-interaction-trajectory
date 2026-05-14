@@ -69,6 +69,10 @@ def build_topic_layer(conversations: list[ConversationRecord]) -> list[dict]:
     One record per conversation.
     Used for the Topic scatter plot (embedding-based).
     The `full_text` field is what gets fed to the embedding model.
+    Fields left null here are populated downstream:
+      - short_title, short_summary  ← pipeline.beliefs → pipeline.embed
+      - embedding, x, y             ← pipeline.embed (UMAP)
+      - topic_label, cluster_id, root_cluster_idx ← pipeline.embed (Ward tree)
     """
     records = []
     for c in conversations:
@@ -82,36 +86,18 @@ def build_topic_layer(conversations: list[ConversationRecord]) -> list[dict]:
             "human_turn_count": c.human_turn_count,
             "ai_turn_count": c.ai_turn_count,
             "duration_minutes": c.duration_minutes,
-            # These will be populated downstream by an embedding model
+            # Populated by pipeline.beliefs + pipeline.embed
+            "short_title": None,
+            "short_summary": None,
+            # Populated by pipeline.embed
             "embedding": None,
             "topic_label": None,
             "cluster_id": None,
+            "root_cluster_idx": None,
+            "x": None,
+            "y": None,
             # Text inputs for LLM / embedding steps
             "full_text": c.full_text,
-            "human_text": c.human_text,
-        })
-    return records
-
-
-def build_method_layer(conversations: list[ConversationRecord]) -> list[dict]:
-    """
-    One record per conversation on a timeline.
-    Used for the Method layer (methodology evolution).
-    `method_keywords` will be populated by downstream LLM extraction.
-    """
-    records = []
-    for c in conversations:
-        records.append({
-            "id": c.id,
-            "title": c.title,
-            "date": c.created_at.date().isoformat() if c.created_at else None,
-            "timestamp": c.created_at.isoformat() if c.created_at else None,
-            "duration_minutes": c.duration_minutes,
-            "human_turn_count": c.human_turn_count,
-            # Downstream LLM step populates these
-            "method_keywords": [],
-            "workflow_summary": None,
-            # Source text for extraction
             "human_text": c.human_text,
         })
     return records

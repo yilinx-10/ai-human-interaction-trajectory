@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+.env
+
+# Node
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Large data files — too big for GitHub (>50MB)
+# Run the pipeline locally to regenerate these
+**/conversations.json
+*.zip
+
+# Personal/private project files
+memory-bank/
+CLAUDE.md
+
+# Raw/personal conversation export directories
+frontend/public/data/donghua-haiku-100/
+frontend/public/data/donghua-sonnet-100/
+frontend/public/data/yilin-haiku/
+test_data/
+teammate-data/
+processed_teammate/
+teammate_ver/
+teammate_ver
+analysis_output/
+
+# Pipeline-generated outputs (regenerate via pipeline commands in README)
+processed/
+frontend/public/data/

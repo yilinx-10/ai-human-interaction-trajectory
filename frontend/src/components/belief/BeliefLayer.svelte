@@ -6,7 +6,6 @@
   import DateRangeSlider from './DateRangeSlider.svelte'
   import BeliefLegend from './BeliefLegend.svelte'
   import BeliefEditToolbar from './BeliefEditToolbar.svelte'
-
   let loading = true
   let error = null
 
@@ -42,9 +41,10 @@
       idToCanon={merged.idToCanon}
     />
 
+    <BeliefLegend />
+
     {#if $beliefViewMode === 'global'}
       <DateRangeSlider />
-      <BeliefLegend />
       <div class="stats-bar">
         <span>{merged.nodes.length} beliefs</span>
         <span class="sep">·</span>
@@ -52,7 +52,7 @@
         <span class="sep">·</span>
         <span class="shared">{merged.nodes.filter(n => n.shared).length} shared</span>
         <span class="sep">·</span>
-        <span class="contra">{merged.edges.filter(e => e.relation === 'contradicts').length} contradictions</span>
+        <span class="contra">{merged.edges.filter(e => e.relation === 'tension').length} tensions</span>
       </div>
     {/if}
   {/if}

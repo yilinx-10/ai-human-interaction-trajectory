@@ -1,14 +1,12 @@
 import { writable } from 'svelte/store'
 
-// Active layer: 'topic' | 'method' | 'belief'
-export const activeLayer = writable('topic')
 
 // Selected item for the detail panel — null or { type, data }
 export const selectedItem = writable(null)
 
 // Cached data (avoid re-fetching on tab switch)
 export const topicData = writable(null)
-export const methodData = writable(null)
+
 export const beliefData = writable(null)
 
 // Belief layer date range filter: indices into BELIEF_DATES array
@@ -31,3 +29,8 @@ export const beliefEdits = writable({
   deletedEdges: new Set(),  // keys: "src→tgt:relation"
   texts: new Map(),         // nodeId → edited text
 })
+
+// Unified view: null = scatter map, string convId = expanded conversation network
+export const expandedConvId = writable(null)
+// Screen position (relative to main element) of last clicked scatter bubble
+export const bubbleOrigin = writable(null)

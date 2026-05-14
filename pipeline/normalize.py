@@ -26,8 +26,16 @@ def _extract_text(content: list[dict]) -> str:
     """Pull plain text out of a message's content array."""
     parts: list[str] = []
     for block in content:
-        if block.get("type") == "text":
+        btype = block.get("type")
+        if btype == "text":
             parts.append(block.get("text", ""))
+        elif btype == "tool_result":
+            # tool_result content can be a string or a nested content array
+            inner = block.get("content", "")
+            if isinstance(inner, str):
+                parts.append(inner)
+            elif isinstance(inner, list):
+                parts.append(_extract_text(inner))
     return "\n".join(parts).strip()
 
 

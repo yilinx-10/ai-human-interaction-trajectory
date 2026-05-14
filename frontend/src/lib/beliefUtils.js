@@ -1,6 +1,7 @@
 /**
  * Merge nodes that share identical text across conversations into single canonical nodes.
- * Shared nodes get frequency > 1 and a conversations[] array.
+ * shared    — true if the node appears in more than one conversation
+ * recurring — true if the node appears in more than 5 turns within any single conversation
  */
 export function buildMergedGraph(perConversation) {
   const textToCanon = new Map()  // normalized text → canonical node id
@@ -10,6 +11,8 @@ export function buildMergedGraph(perConversation) {
   for (const conv of perConversation) {
     for (const node of conv.nodes) {
       const key = node.text.toLowerCase().trim()
+      const turnSpan = new Set(node.turn_indices ?? []).size
+      const isRecurring = turnSpan >= 5
       if (!textToCanon.has(key)) {
         textToCanon.set(key, node.id)
         canonMap.set(node.id, {
@@ -18,6 +21,7 @@ export function buildMergedGraph(perConversation) {
           frequency: 1,
           firstDate: node.date,
           shared: false,
+          recurring: isRecurring,
         })
       } else {
         const cid = textToCanon.get(key)
@@ -26,6 +30,7 @@ export function buildMergedGraph(perConversation) {
           cn.conversations.push({ id: conv.id, title: conv.title, date: conv.date })
           cn.frequency++
           cn.shared = true
+          if (isRecurring) cn.recurring = true
           if (node.date && (!cn.firstDate || node.date < cn.firstDate)) {
             cn.firstDate = node.date
           }
@@ -71,23 +76,54 @@ const STOP = new Set([
   'what','which','who','my','your','his','its','our','their','me','him','her',
 ])
 
-function tokenize(text) {
-  return new Set(
-    (text ?? '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
-      .filter(w => w.length > 2 && !STOP.has(w))
-  )
+// Extract content-word unigrams and adjacent-content-word bigrams (≤2 function
+// words between each pair). Consistent with the phrase matching in DetailPanel.
+function extractTerms(text) {
+  const words = (text ?? '').toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length >= 3)
+
+  const isContent = w => w.length > 2 && !STOP.has(w)
+  const unigrams = new Set(words.filter(isContent))
+
+  const bigrams = new Set()
+  for (let i = 0; i < words.length; i++) {
+    if (!isContent(words[i])) continue
+    for (let j = i + 1; j < words.length && j <= i + 3; j++) {
+      if (isContent(words[j])) {
+        bigrams.add(words.slice(i, j + 1).join(' '))
+        break
+      }
+    }
+  }
+
+  return { unigrams, bigrams }
 }
 
-function jaccard(a, b) {
-  if (!a.size && !b.size) return 0
-  let inter = 0
-  for (const w of a) if (b.has(w)) inter++
-  return inter / (a.size + b.size - inter)
+// Bigram-weighted similarity: shared phrases count 2× over shared single words.
+// Falls back to unigram Jaccard when one side has no bigrams.
+function phraseSimilarity(termsA, termsB) {
+  const { unigrams: uA, bigrams: bA } = termsA
+  const { unigrams: uB, bigrams: bB } = termsB
+
+  let biInter = 0
+  for (const bg of bA) if (bB.has(bg)) biInter++
+  const biUnion = bA.size + bB.size - biInter
+
+  let uniInter = 0
+  for (const w of uA) if (uB.has(w)) uniInter++
+  const uniUnion = uA.size + uB.size - uniInter
+
+  if (biUnion > 0 && uniUnion > 0) {
+    return (2 * biInter / biUnion + uniInter / uniUnion) / 3
+  }
+  return uniUnion > 0 ? uniInter / uniUnion : 0
 }
 
 /**
  * Given a source node id and the visible node/edge sets, return the top-N
- * candidate target nodes from *other* conversations, ranked by text similarity
+ * candidate target nodes from *other* conversations, ranked by phrase similarity
  * and type match. Used to power cross-network link suggestions.
  */
 export function recommendLinks(sourceId, allNodes, visibleEdges, topN = 6) {
@@ -105,7 +141,7 @@ export function recommendLinks(sourceId, allNodes, visibleEdges, topN = 6) {
     if (t === sourceId) connected.add(s)
   }
 
-  const srcWords = tokenize(src.text ?? '')
+  const srcTerms = extractTerms(src.text ?? '')
 
   return allNodes
     .filter(n => {
@@ -114,10 +150,11 @@ export function recommendLinks(sourceId, allNodes, visibleEdges, topN = 6) {
       return (n.conversations ?? []).some(c => !srcConvIds.has(c.id))
     })
     .map(n => {
-      const sim  = jaccard(srcWords, tokenize(n.text ?? ''))
+      const sim  = phraseSimilarity(srcTerms, extractTerms(n.text ?? ''))
       const type = n.type === src.type ? 0.08 : 0
       return { node: n, score: sim + type }
     })
+    .filter(r => r.score > 0.08)   // require actual text overlap, not type bonus alone
     .sort((a, b) => b.score - a.score)
     .slice(0, topN)
     .map(r => r.node)
@@ -132,7 +169,7 @@ export function computeStats(nodes, edges) {
   return {
     totalNodes: nodes.length,
     totalEdges: edges.length,
-    contradictions: edges.filter(e => e.relation === 'contradicts').length,
+    contradictions: edges.filter(e => e.relation === 'tension').length,
     newThisWeek:    nodes.filter(n => n.firstDate && n.firstDate >= weekAgo).length,
   }
 }
